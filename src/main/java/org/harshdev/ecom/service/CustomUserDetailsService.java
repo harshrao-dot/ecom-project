@@ -7,7 +7,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
@@ -16,15 +15,12 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        org.harshdev.ecom.User user = userRepository.findByUsername(username);
-
-        if (user == null) {
-            throw new UsernameNotFoundException("User nahi mila bhai!");
-        }
+        org.harshdev.ecom.User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User nahi mila bhai: " + username));
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
-                .password(user.getPassword()) // Ye encoded wala hi hona chahiye
+                .password(user.getPassword())
                 .authorities(user.getRole())
                 .build();
     }

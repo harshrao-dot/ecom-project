@@ -1,8 +1,8 @@
 package org.harshdev.ecom.controller;
 
-
 import org.harshdev.ecom.Product;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.harshdev.ecom.service.ProductService;
 
@@ -13,50 +13,44 @@ import java.util.List;
 public class ProductController {
 
     @Autowired
-    private ProductService service;
+    private ProductService productService;
 
     @GetMapping("/all-products")
     public List<Product> getAllProducts(){
-        return service.getAllProducts();
+        return productService.getAllProducts();
     }
 
     @PostMapping("/add-product")
     public Product addProduct(@RequestBody Product product){
-        return service.addProduct(product);
+        return productService.addProduct(product);
     }
 
     @GetMapping("/{id}")
     public Product getById(@PathVariable String id){
-        return service.findById(id);
+        return productService.findById(id);
     }
 
     @DeleteMapping("/{id}")
     public void deleteById(@PathVariable String id){
-        service.deleteProduct(id);
+        productService.deleteProduct(id);
     }
 
     @PutMapping("/{id}")
     public void updateById(@PathVariable String id, @RequestBody Product product){
-        service.updateById(id, product);
+        productService.updateById(id, product);
     }
 
     @DeleteMapping("/deleteAll")
     public void deleteAll(){
-        service.deleteAll();
+        productService.deleteAll();
     }
 
-    @GetMapping("/filter-price")
-    public List<Product> filterByPrice(@RequestParam double min, @RequestParam double max){
-        return service.getProductByPriceRanges(min, max);
-    }
+    @GetMapping("/search")
+    public ResponseEntity<List<Product>> searchProducts(@RequestParam(required = false) String name,
+                                                        @RequestParam(required = false) String category,
+                                                        @RequestParam(required = false) Double minPrice,
+                                                        @RequestParam(required = false) Double maxPrice){
 
-    @GetMapping("/category/{category}")
-    public List<Product> getByCategory(@PathVariable String category){
-        return service.getByCategory(category);
-    }
-
-    @GetMapping("/sort/price-low")
-    public List<Product> sortByPrice(){
-        return service.getAllProductsSortedByPrice();
+        return ResponseEntity.ok(productService.getFilteredProducts(name, category, minPrice, maxPrice));
     }
 }

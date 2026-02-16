@@ -1,15 +1,15 @@
 package org.harshdev.ecom.controller;
 
 
-import org.harshdev.ecom.Product;
+import org.harshdev.ecom.Address;
 import org.harshdev.ecom.User;
-import org.harshdev.ecom.service.ProductService;
 import org.harshdev.ecom.service.UserService;
 import org.harshdev.ecom.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,7 +19,7 @@ import java.util.List;
 public class UserController {
 
     @Autowired
-    private UserService service;
+    private UserService userService;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -29,53 +29,67 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@RequestBody User user) {
-        String result = service.registerUser(user);
+        String result = userService.registerUser(user);
 
         if (result.contains("already exists")) {
-            return ResponseEntity.status(400).body(result); // Ab Postman mein 400 dikhayega
+            return ResponseEntity.status(400).body(result);
         }
 
-        return ResponseEntity.status(201).body(result); // 201 matlab Created
+        return ResponseEntity.status(201).body(result);
     }
 
     @GetMapping("/all")
     public List<User> getAllUsers(){
-        return service.getAllUsers();
+        return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
     public User getUserById(@PathVariable String id){
-        return service.getUserById(id);
+        return userService.getUserById(id);
     }
 
     @DeleteMapping("/{id}")
     public void deleteById(@PathVariable String id){
-        service.deleteUserById(id);
+        userService.deleteUserById(id);
     }
 
     @DeleteMapping("/deleteAll")
     public void deleteAllUsers(){
-        service.deleteAllUsers();
+        userService.deleteAllUsers();
     }
 
     @PutMapping("/{id}")
     public String updateById(@PathVariable String id, @RequestBody User user){
-        return service.updateUser(id, user);
+        return userService.updateUser(id, user);
     }
 
     @PostMapping("/login")
     public String login(@RequestBody org.harshdev.ecom.model.LoginRequest loginRequest) {
         try {
-            // 1. Spring Security ko bolo ki check kare banda sahi h ya nahi
-            authenticationManager.authenticate(
+            authenticationManager.authenticate(//springsecurity checks if the user is correct or not
                     new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
             );
 
-            // 2. Agar upar wali line fail nahi hui, matlab banda sahi h! Token generate karo.
-            return jwtUtils.generateToken(loginRequest.getUsername());
+            return jwtUtils.generateToken(loginRequest.getUsername());//is spring security authorize above,then gernrate token
 
         } catch (Exception e) {
             return "Bhai, galat details di tune. Access Denied!";
         }
     }
+
+    @PutMapping("/profile/update")
+    public ResponseEntity<User> updateProfile(Authentication auth, @RequestParam String fullName){
+        return ResponseEntity.ok(userService.updateProfile(auth.getName(), fullName));
+    }
+
+    @PostMapping("/profile/address")
+    public ResponseEntity<User> addAddress(Authentication auth, @RequestBody Address address) { // Gemini: RequestBody use karo
+        return ResponseEntity.ok(userService.addAddress(auth.getName(), address));
+    }
+
+    @GetMapping("/profile/me")
+    public ResponseEntity<User> getMyProfile(Authentication auth){
+        return ResponseEntity.ok(userService.findByUsername(auth.getName()).orElseThrow(() -> new RuntimeException("User session expire ho gaya!")));
+    }
+
 }
